@@ -1,28 +1,90 @@
 // Importeer het npm pakket express uit de node_modules map
 import express from 'express'
+
 // Importeer de zelfgemaakte functie fetchJson uit de ./helpers map
 import fetchJson from './helpers/fetch-json.js'
 
 // Stel het basis endpoint in
 const apiUrl = 'https://fdnd.directus.app/items'
 
+// Haal alle squads uit de WHOIS API op
+const squadData = await fetchJson(apiUrl + '/squad')
+
 // Maak een nieuwe express app aan
 const app = express()
 
 // Stel ejs in als template engine
 app.set('view engine', 'ejs')
+
 // Stel de map met ejs templates in
 app.set('views', './views')
 
-// Gebruik de map 'public' voor statische resources
+// Gebruik de map 'public' voor statische resources, zoals stylesheets, afbeeldingen en client-side JavaScript
 app.use(express.static('public'))
 
+
+// 2. Routes die HTTP Requests en Responses afhandelen
+
 // Maak een GET route voor de index
+
+// Stap 1
 app.get('/', function (request, response) {
-  // Haal alle personen uit de FDND API op
-  fetchJson(apiUrl + '/Person').then((data) => {
-    // Render index.ejs uit de views map en geef uit FDND API opgehaalde data mee
-    response.render('index', data)
+  // Haal alle personen uit de WHOIS API op
+
+  // Stap 2
+  // fetchJson('https://fdnd.directus.app/items/person').then((persons) => {
+  fetchJson(apiUrl + '/person').then((persons) => {
+    // apiData bevat gegevens van alle personen uit alle squads
+    // Je zou dat hier kunnen filteren, sorteren, of zelfs aanpassen, voordat je het doorgeeft aan de view
+    
+    // Stap 3
+    // Render index.ejs uit de views map en geef de opgehaalde data mee als variabele, genaamd persons
+
+    // Stap 4
+    // Met API data en view worden op basis van JSON samen toegevoegd om HTML te maken
+    response.render('index', {persons: persons.data, squads: squadData.data})
+  })
+
+})
+
+
+// Squad pagina
+// Haal alle personen uit de betreffende squad uit de WHOIS API op
+//https://fdnd.directus.app/items/person/?filter={"squad_id":3}
+//https://fdnd.directus.app/items/person/?filter={"squad_id":3}&sort=name
+app.get('/squad', function (request, response) {
+  
+    fetchJson('https://fdnd.directus.app/items/person/?filter={"squad_id":3}&sort=name').then((apiData) => {
+      response.render('squad', {persons: apiData.data})
+    })
+
+})
+
+// Maak een GET route voor de FIND / FILTER dingen
+
+app.get('/filter/:query', function (request, response) {
+
+  /*
+  https://fdnd.directus.app/items/person/?filter={"name":"Alisa"}
+  https://fdnd.directus.app/items/person/?filter={"name":{"_contains":"oo"}}
+  https://fdnd.directus.app/items/person/?filter={"name":{"_eq":"oo"}}
+  https://fdnd.directus.app/items/person/?filter={"bio":{"_icontains":"frontend"}}
+  */
+
+  fetchJson(apiUrl + '/person/' + request.params.q).then((apiData) => {
+      // Render person.ejs uit de views map en geef de opgehaalde data mee als variable, genaamd person
+      response.render('filter', {persons: apiData.data, squads: squadData.data})
+  })
+})
+
+
+// Maak een GET route voor een detailpagina met een request parameter id
+app.get('/person/:id', function (request, response) {
+      
+  // Gebruik de request parameter id en haal de juiste persoon uit de WHOIS API op
+  fetchJson(apiUrl + '/person/' + request.params.id).then((apiData) => {
+    // Render person.ejs uit de views map en geef de opgehaalde data mee als variable, genaamd person
+    response.render('person', {person: apiData.data, squads: squadData.data})
   })
 })
 
@@ -32,14 +94,6 @@ app.post('/', function (request, response) {
   response.redirect(303, '/')
 })
 
-// Maak een GET route voor person met een request parameter id
-app.get('/person/:id', function (request, response) {
-  // Gebruik de request parameter id en haal de juiste persoon uit de FDND API op
-  fetchJson(apiUrl + '/Person/' + request.params.id).then((data) => {
-    // Render index.ejs uit de views map en geef uit FDND API opgehaalde data mee
-    response.render('person', data)
-  })
-})
 
 // Stel het poortnummer in waar express op moet gaan luisteren
 app.set('port', process.env.PORT || 8000)
