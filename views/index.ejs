@@ -1,9 +1,32 @@
 <%- include('./partials/head') %>
 
-<ul>
-  <% data.forEach(person => { %>
-  <li><a href="./person/<%= person.id %>"><%=person.name %></a></li>
-  <% }) %>
-</ul>
 
-<%- include('./partials/foot') %>
+
+<header>
+  <header>
+    <h1>FDND Squadpage</h1>
+  </header>
+  <p>Sorteren op:</p>
+  <select>
+    <option>Naam A-Z</option>
+    <option>Naam Z-A</option>
+  </select>
+  <input type="search" />
+  Zoeken
+</header>
+
+<main>
+  <% persons.forEach(person => { %>
+  <article>
+    <img class="blank-image" src="./images/Vectorblank_image.png"
+    <h3><%= person.name %> <%= person.surname %></h3>
+
+    <h4>Squad <%= person.squad_id %></h4>
+    <ul>
+      <li><%= person.website %></li>
+      <li><%= person.bio %></li>
+    </ul>
+  </article>
+</main>
+
+<% }) %> <%- include('./partials/foot') %>
